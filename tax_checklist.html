@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>税務申告書作成チェックシート</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-light: #4a4a6a;
+    --ink-muted: #8888aa;
+    --paper: #faf9f6;
+    --paper-warm: #f5f3ee;
+    --paper-tinted: #eeebdf;
+    --rule: #d8d4c8;
+    --accent: #c0392b;
+    --accent-soft: #fdecea;
+    --blue: #1e5c96;
+    --blue-soft: #d5e4f5;
+    --green: #1e6b3a;
+    --green-soft: #d4f0de;
+    --gold: #8a6200;
+    --gold-soft: #fef3d0;
+    --detail-bg: #f0f4fa;
+    --detail-border: #b8cfe8;
+    --shadow: 0 1px 3px rgba(26,26,46,0.08), 0 4px 16px rgba(26,26,46,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--paper-tinted); color: var(--ink); min-height: 100vh; line-height: 1.7; }
+
+  .site-header { background: var(--ink); color: #fff; padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(0,0,0,0.25); }
+  .site-header h1 { font-family: 'Noto Serif JP', serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.08em; }
+  .site-header .sub { font-size: 0.7rem; color: #aaa; margin-top: 2px; letter-spacing: 0.1em; }
+  .toolbar { display: flex; gap: 8px; align-items: center; }
+  .btn { padding: 7px 16px; border-radius: 3px; font-size: 0.78rem; font-family: 'Noto Sans JP', sans-serif; font-weight: 500; cursor: pointer; border: 1px solid transparent; letter-spacing: 0.04em; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #a32520; }
+  .btn-secondary { background: transparent; color: #ccc; border-color: #555; }
+  .btn-secondary:hover { background: #333; color: #fff; }
+
+  .progress-wrap { background: #2a2a3e; height: 3px; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #e74c3c); transition: width 0.3s ease; width: 0%; }
+
+  .stats-bar { background: var(--paper-warm); border-bottom: 1px solid var(--rule); padding: 9px 40px; display: flex; gap: 28px; font-size: 0.77rem; color: var(--ink-light); align-items: center; }
+  .stat { display: flex; align-items: center; gap: 7px; }
+  .stat-num { font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+  .stat-num.checked { color: var(--green); }
+  .stat-num.remaining { color: var(--accent); }
+
+  .main { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  .section { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; margin-bottom: 22px; overflow: hidden; box-shadow: var(--shadow); }
+  .section-header { padding: 13px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; border-bottom: 1px solid var(--rule); transition: background 0.15s; }
+  .section-header.corp { background: linear-gradient(90deg,#1a1a2e,#2c2c4e); color:#fff; border-bottom-color:#444; }
+  .section-header.corp:hover { background: linear-gradient(90deg,#222238,#363660); }
+  .section-header.tax  { background: linear-gradient(90deg,#0f3d5c,#1a5c8a); color:#fff; border-bottom-color:#1a4a6e; }
+  .section-header.tax:hover  { background: linear-gradient(90deg,#134a6e,#1f6da0); }
+  .section-header.acct { background: linear-gradient(90deg,#3a2800,#6b4a00); color:#fff; border-bottom-color:#4a3500; }
+  .section-header.acct:hover { background: linear-gradient(90deg,#4a3500,#7a5500); }
+  .section-header.common { background: linear-gradient(90deg,#2d4a1e,#3d6628); color:#fff; border-bottom-color:#2a4a1a; }
+  .section-header.common:hover { background: linear-gradient(90deg,#364f25,#477532); }
+  .section-title { font-family:'Noto Serif JP',serif; font-size:0.95rem; font-weight:600; letter-spacing:0.06em; display:flex; align-items:center; gap:10px; }
+  .section-tag { font-size:0.62rem; padding:2px 8px; border-radius:2px; letter-spacing:0.1em; font-family:'Noto Sans JP',sans-serif; font-weight:500; background:rgba(255,255,255,0.15); color:#ddd; }
+  .section-meta { display:flex; align-items:center; gap:12px; font-size:0.75rem; }
+  .section-count { opacity:0.8; }
+  .toggle-icon { font-size:0.68rem; opacity:0.7; transition:transform 0.2s; }
+  .toggle-icon.open { transform:rotate(180deg); }
+  .section-body { display:block; }
+  .section-body.collapsed { display:none; }
+
+  .subsection { padding:0; }
+  .subsection-title { font-size:0.76rem; font-weight:600; color:var(--ink-light); letter-spacing:0.08em; padding:9px 20px 7px; border-bottom:1px solid var(--rule); background:var(--paper-tinted); display:flex; align-items:center; gap:8px; }
+  .subsection-title::before { content:''; display:inline-block; width:3px; height:11px; border-radius:2px; background:var(--ink-muted); flex-shrink:0; }
+
+  .check-item { display:flex; align-items:flex-start; padding:10px 20px; border-bottom:1px solid #f0ede6; transition:background 0.1s; gap:10px; cursor:pointer; }
+  .check-item:hover { background:#f9f8f4; }
+  .check-item.checked { background:#f3fcf5; }
+  .check-item.checked .item-label { color:var(--ink-muted); text-decoration:line-through; text-decoration-color:#aaa; }
+  .check-item.na { background: #f8f6ef; }
+  .check-item.na .item-label { color: #b0a890; }
+  .check-item.na .item-no { color: #ccc; }
+  .check-item.na .item-note { opacity: 0.4; }
+  .checkbox { width:17px; height:17px; border:1.5px solid #bbb; border-radius:3px; flex-shrink:0; margin-top:3px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; background:#fff; }
+  .check-item.checked .checkbox { background:var(--green); border-color:var(--green); }
+  .check-item.na .checkbox { background: #e8e4d8; border-color: #c8c0a8; }
+  .check-icon { display:none; font-size:10px; color:#fff; }
+  .check-item.na .check-icon { display:none; }
+  .na-icon { display:none; font-size:10px; color:#a09070; font-weight:700; }
+  .check-item.na .na-icon { display:block; }
+  .check-item.checked .check-icon { display:block; }
+  .item-no { font-size:0.68rem; color:var(--ink-muted); font-variant-numeric:tabular-nums; min-width:30px; flex-shrink:0; margin-top:4px; font-weight:600; }
+  .check-item.checked .item-no { color:#ccc; }
+  .item-content { flex:1; min-width:0; }
+  .item-label { font-size:0.85rem; line-height:1.6; color:var(--ink); transition:color 0.15s; }
+  .item-note { font-size:0.74rem; color:var(--blue); margin-top:3px; padding-left:10px; border-left:2px solid var(--blue-soft); line-height:1.55; }
+  .item-note.warning { color:var(--gold); border-left-color:#f5d76e; }
+  .item-note.caution { color:var(--accent); border-left-color:#f5b8b2; }
+
+  .detail-btn { flex-shrink:0; margin-top:2px; background:none; border:1px solid var(--detail-border); border-radius:3px; padding:2px 8px; font-size:0.65rem; color:var(--blue); cursor:pointer; font-family:'Noto Sans JP',sans-serif; transition:all 0.15s; white-space:nowrap; }
+  .detail-btn:hover { background:var(--blue-soft); }
+  .detail-btn.open { background:var(--blue-soft); }
+
+  .detail-panel { display:none; background:var(--detail-bg); border-top:1px solid var(--detail-border); border-bottom:1px solid #dde8f5; padding:12px 20px 12px 62px; font-size:0.78rem; line-height:1.75; color:#2a3a50; }
+  .detail-panel.open { display:block; }
+  .detail-panel p { margin-bottom:6px; }
+  .detail-panel p:last-child { margin-bottom:0; }
+  .detail-panel ul { padding-left:16px; margin:4px 0 6px; }
+  .detail-panel ul li { margin-bottom:3px; }
+  .d-label { display:inline-block; font-weight:600; font-size:0.7rem; background:#dbe9f8; color:var(--blue); border-radius:2px; padding:1px 7px; margin-bottom:6px; letter-spacing:0.05em; }
+  .d-ref { margin-top:8px; padding-top:7px; border-top:1px solid #ccddf0; font-size:0.73rem; color:#555; }
+  .d-ref a { color:var(--blue); text-decoration:none; border-bottom:1px solid var(--blue-soft); margin-right:12px; }
+  .d-ref a:hover { border-bottom-color:var(--blue); }
+  .code-box { background:#fff; border:1px solid #c8daf0; border-radius:3px; padding:8px 12px; margin:6px 0; font-size:0.75rem; line-height:1.9; white-space:pre-wrap; }
+
+
+  /* ── STICKY HEADER WRAPPER ── */
+  .sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  /* ── SAVE/LOAD BAR ── */
+  .save-bar {
+    background: #23243a;
+    border-bottom: 1px solid #383858;
+    padding: 7px 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .save-bar-label { font-size: 0.7rem; color: #888; letter-spacing: 0.08em; margin-right: 4px; white-space: nowrap; }
+  .save-bar .btn-xs {
+    padding: 5px 13px;
+    border-radius: 3px;
+    font-size: 0.74rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #555;
+    background: transparent;
+    color: #ccc;
+    letter-spacing: 0.03em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .save-bar .btn-xs:hover { background: #333; color: #fff; border-color: #777; }
+  .save-bar .btn-xs.green  { border-color: #3a8a5a; color: #6ecf96; }
+  .save-bar .btn-xs.green:hover  { background: #1e4a30; }
+  .save-bar .btn-xs.blue   { border-color: #3a6aaa; color: #7ab0e8; }
+  .save-bar .btn-xs.blue:hover   { background: #1a3a60; }
+  .save-bar .btn-xs.orange { border-color: #8a6a2a; color: #e0b060; }
+  .save-bar .btn-xs.orange:hover { background: #4a3a10; }
+  .save-bar .sep { width: 1px; height: 18px; background: #444; margin: 0 2px; }
+  .autosave-status { font-size: 0.68rem; color: #666; margin-left: auto; white-space: nowrap; }
+  .autosave-status.saved { color: #5aaa78; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-left: 3px solid #5aaa78; }
+  .toast.error   { border-left: 3px solid var(--accent); }
+  .toast.info    { border-left: 3px solid var(--blue); }
+
+
+  /* ── HELP PANEL ── */
+  .help-panel {
+    background: #1e2240;
+    border-bottom: 1px solid #2e3460;
+    padding: 0;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s ease, padding 0.2s ease;
+  }
+  .help-panel.open {
+    max-height: 600px;
+    padding: 0;
+  }
+  .help-inner {
+    padding: 18px 40px 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .help-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #2e3a5e;
+    border-radius: 5px;
+    padding: 13px 15px;
+  }
+  .help-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #c8d8f0;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .help-card-body {
+    font-size: 0.73rem;
+    color: #8898b8;
+    line-height: 1.75;
+  }
+  .help-card-body b { color: #a8c0e0; font-weight: 600; }
+  .help-card-body .step {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 5px;
+    align-items: flex-start;
+  }
+  .help-card-body .step-no {
+    background: #2e4a7a;
+    color: #7ab0e8;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .help-toggle-btn {
+    background: none;
+    border: none;
+    color: #7ab0e8;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    padding: 0 2px;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .help-toggle-btn:hover { color: #a8d0f8; }
+
+  @media print {
+    .save-bar, .help-panel, .help-toggle-btn { display: none !important; }
+  }
+
+  /* hidden file input */
+  #jsonFileInput, #csvFileInput { display: none; }
+
+  .group-memo-wrap { padding:7px 20px 10px; background:#faf8f2; border-top:1px dashed #d8d4c8; }
+  .group-memo-label { font-size:0.68rem; color:var(--ink-muted); margin-bottom:4px; font-weight:600; letter-spacing:0.06em; }
+  .group-memo-input { width:100%; min-height:44px; font-size:0.78rem; font-family:'Noto Sans JP',sans-serif; color:var(--ink); border:1px solid #ddd; border-radius:3px; background:#fff; padding:6px 8px; outline:none; resize:vertical; transition:border-color 0.15s; line-height:1.6; }
+  .group-memo-input:focus { border-color:var(--blue); }
+  .group-memo-input::placeholder { color:#bbb; font-size:0.73rem; }
+
+  @media print {
+    @page { size:A4; margin:13mm 11mm; }
+    body { background:#fff; font-size:9.5px; color:#000; }
+    .site-header .toolbar, .stats-bar, .progress-wrap, .detail-btn { display:none !important; }
+    .site-header { position:static; background:#fff!important; color:#000!important; border-bottom:1.5px solid #000; padding:6px 0 5px; box-shadow:none; }
+    .site-header h1 { font-size:13px!important; color:#000!important; }
+    .main { max-width:100%; padding:6px 0 0; }
+    .section { box-shadow:none; border:1px solid #bbb; margin-bottom:8px; page-break-inside:avoid; break-inside:avoid; }
+    .section-body.collapsed { display:block!important; }
+    .section-header { background:#efefef!important; color:#000!important; padding:5px 10px; border-bottom:1px solid #999; }
+    .section-title { font-size:10px!important; color:#000!important; }
+    .section-tag { display:none; }
+    .subsection-title { font-size:8.5px; padding:5px 10px 4px; background:#f8f8f8; color:#333; }
+    .check-item { padding:3px 10px; border-bottom:1px solid #eee; }
+    .check-item.checked { background:#f9fff9; }
+    .checkbox { width:11px; height:11px; border:1px solid #888; margin-top:1px; }
+    .check-item.checked .checkbox { background:#444; border-color:#444; }
+    .check-icon { font-size:7px; }
+    .item-no { font-size:7.5px; min-width:26px; }
+    .item-label { font-size:8.5px; line-height:1.5; }
+    .item-note { font-size:7.5px; margin-top:1px; }
+    .detail-panel { display:none!important; }
+    .group-memo-wrap { padding:4px 10px 6px; background:#fafafa; border-top:1px solid #ddd; }
+    .group-memo-label { font-size:7px; }
+    .group-memo-input { min-height:28px; font-size:7.5px; border:1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sticky-top">
+<header class="site-header">
+  <div>
+    <h1>税務申告書作成チェックシート</h1>
+    <div class="sub">法人税 ／ 消費税 ／ 共通確認事項</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-secondary" onclick="resetAll()">リセット</button>
+    <button class="btn btn-secondary" onclick="toggleAll()">全て展開/折畳</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨️ PDF出力</button>
+  </div>
+</header>
+
+<!-- SAVE BAR -->
+<div class="save-bar">
+  <span class="save-bar-label">保存</span>
+  <button class="btn-xs green" onclick="saveJSON()" title="チェック状態・メモをJSONファイルに保存">💾 JSON保存</button>
+  <button class="btn-xs blue"  onclick="document.getElementById('jsonFileInput').click()" title="保存したJSONファイルを読み込む">📂 JSON読込</button>
+  <input type="file" id="jsonFileInput" accept=".json" onchange="loadJSON(event)">
+  <div class="sep"></div>
+  <span class="save-bar-label">エクスポート</span>
+  <button class="btn-xs orange" onclick="exportCSV()" title="チェック状態・メモをCSVに出力（Excel確認用）">📊 CSV出力</button>
+  <div class="sep"></div>
+  <span class="save-bar-label">自動保存（ブラウザ）</span>
+  <button class="btn-xs" id="autoSaveToggle" onclick="toggleAutoSave()">🔄 OFF</button>
+  <span class="autosave-status" id="autoSaveStatus"></span>
+  <div class="sep"></div>
+  <button class="help-toggle-btn" onclick="toggleHelp()">❓ 使い方</button>
+</div>
+
+<!-- HELP PANEL -->
+<div class="help-panel" id="helpPanel">
+  <div class="help-inner">
+
+    <div class="help-card">
+      <div class="help-card-title">✅ チェックの使い方</div>
+      <div class="help-card-body">
+        <div class="step"><span class="step-no">1</span><span>各項目をクリックするたびに状態が切り替わります。<b>未確認 → 済（緑）→ 該当なし（—）→ 未確認…</b> の順で循環します。</span></div>
+        <div class="step"><span class="step-no">2</span><span><b>詳細 ▾</b> ボタンで申告書への記載方法・計算式・参照リンクを確認できます。</span></div>
+        <div class="step"><span class="step-no">3</span><span>各グループ下の <b>📝 メモ欄</b> に特記事項・対応状況を自由に入力できます。</span></div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-title">💾 JSON保存・読込（推奨）</div>
+      <div class="help-card-body">
+        <div class="step"><span class="step-no">1</span><span>作業中に <b>💾 JSON保存</b> を押すと、チェック状態とメモを丸ごと <b>.json</b> ファイルに保存します。</span></div>
+        <div class="step"><span class="step-no">2</span><span>次回作業時にファイルを開いて <b>📂 JSON読込</b> → 保存したファイルを選択すると完全復元できます。</span></div>
+        <div class="step"><span class="step-no">3</span><span>顧問先ごとにファイル名を変えて管理するのがおすすめです。例：<b>checklist_ABC社_2024.json</b></span></div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-title">📊 CSV出力（記録・共有用）</div>
+      <div class="help-card-body">
+        <div class="step"><span class="step-no">1</span><span><b>📊 CSV出力</b> を押すと「No・大項目・小項目・チェック項目・確認状態（済／未）・メモ」の列でCSVが出力されます。</span></div>
+        <div class="step"><span class="step-no">2</span><span>Excelで開けます（文字化けしないようBOM付きUTF-8で出力）。</span></div>
+        <div class="step"><span class="step-no">3</span><span>申告完了後の記録保存や、チームへの進捗共有にご活用ください。</span></div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-title">🖨️ PDF出力</div>
+      <div class="help-card-body">
+        <div class="step"><span class="step-no">1</span><span>右上の <b>🖨️ PDF出力</b> を押すとブラウザの印刷ダイアログが開きます。</span></div>
+        <div class="step"><span class="step-no">2</span><span>送信先で <b>「PDFに保存」</b> を選ぶとPDFファイルとして保存できます。</span></div>
+        <div class="step"><span class="step-no">3</span><span>印刷時は詳細パネルは非表示になり、チェック欄・メモのみがA4サイズで出力されます。</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div id="toast" class="toast"></div>
+
+<div class="stats-bar">
+  <div class="stat">全項目 <span class="stat-num" id="statTotal">0</span> 件</div>
+  <div class="stat">確認済 <span class="stat-num checked" id="statChecked">0</span> 件</div>
+  <div class="stat">未確認 <span class="stat-num remaining" id="statRemaining">0</span> 件</div>
+  <div class="stat">該当なし <span class="stat-num" id="statNa" style="color:#a09070">0</span> 件</div>
+  <div class="stat" id="statPct" style="margin-left:auto;font-weight:600;"></div>
+</div>
+</div><!-- /.sticky-top -->
+
+<main class="main" id="mainContent"></main>
+
+<script>
+const DATA = [
+  {
+    id:"acct", type:"acct", label:"決算処理・会計チェック（freee）", tag:"ACCOUNTING",
+    groups:[
+      {
+        title:"freee基本設定・期末準備",
+        items:[
+          { label:"対象事業年度・会計期間がfreee上で正しく設定されているか",
+            note:"設定→事業所の設定→会計年度で確認",
+            detail:`<span class="d-label">確認手順</span><p>freee上部メニュー「設定」→「事業所の設定」→「基本情報」タブで会計期間を確認します。前期データが正しく締まっているかも合わせて確認してください。</p>`
+          },
+          { label:"freeeの勘定科目・補助科目の設定は今期の取引内容に対応しているか",
+            note:"使用していない科目・名称が古い科目がないか整理",
+            detail:`<span class="d-label">確認手順</span><p>「設定」→「勘定科目」で一覧を確認します。今期から新設した事業・取引に対応した科目が追加されているか、逆に使われなくなった科目が残っていないかを確認します。</p>`
+          },
+          { label:"freeeの取引先マスタは最新の状態か",
+            note:"廃業・合併した取引先の整理、新規取引先の登録漏れを確認",
+          },
+          { label:"部門・メンバーの設定は実態に合っているか（部門別管理をしている場合）",
+            note:"「設定」→「部門」で確認。退職者・異動後の仕訳への部門割当ミスに注意"
+          },
+        ]
+      },
+      {
+        title:"証憑・入力の確認",
+        items:[
+          { label:"freeeのファイルボックスに取込んだ証憑はすべて仕訳に紐づいているか",
+            note:"ファイルボックスで「未処理」が残っていないか確認",
+            detail:`<span class="d-label">確認手順</span><p>「ファイルボックス」→フィルタで「未処理」を選択し、期末時点で処理漏れの証憑がないか確認します。AI-OCRの読み取りミスによる金額・日付・取引先のズレも目視確認が必要です。</p>`
+          },
+          { label:"自動取込（銀行・カード連携）の明細はすべてマッチング・登録されているか",
+            note:"「自動で経理」に未処理の明細が残っていないか確認",
+            detail:`<span class="d-label">確認手順</span><p>「自動で経理」画面で期末日時点の未処理明細を確認します。勘定科目・税区分の自動提案が誤っているケースがあるため、金額の大きな取引は必ず内容を確認してください。</p>`
+          },
+          { label:"現金取引（小口現金）の手入力仕訳に証憑が添付されているか",
+            note:"freeeでは仕訳に直接ファイルを添付できる。証憑なし仕訳を検索して確認"
+          },
+          { label:"経費申請・精算の未承認・未処理が残っていないか",
+            note:"「経費精算」→「申請一覧」で期末日以前の未承認を確認",
+            detail:`<span class="d-label">確認手順</span><p>「経費精算」→「申請一覧」でステータスが「申請中」「差戻し」のものを確認します。期末日をまたぐ経費で未承認のものは、仕訳計上の要否を判断してください。</p>`
+          },
+          { label:"freeeの仕訳に「未決済」のままになっている取引がないか",
+            note:"売掛金・買掛金の消込漏れに直結する",
+            detail:`<span class="d-label">確認手順</span><p>「取引」→「収入」または「支出」一覧で決済状況フィルタを「未決済」にして確認します。入金・出金済みなのに未消込のものは消込処理を行います。</p>`
+          },
+          { label:"消費税の税区分（課税・非課税・不課税・免税）は仕訳ごとに正確に設定されているか",
+            note:"freeeの税区分設定ミスは消費税申告に直結。勘定科目のデフォルト税区分も確認",
+            detail:`<span class="d-label">よくある税区分ミス</span><ul><li>給与・社会保険料を「課税」にしている（→不課税）</li><li>社内の立替交通費を「課税仕入」にしているが証憑がない</li><li>海外向け売上を「課税売上」にしている（→免税または不課税）</li><li>保険料・損害賠償金を「課税」にしている（→非課税または不課税）</li></ul>`
+          },
+        ]
+      },
+      {
+        title:"残高確認・実査",
+        items:[
+          { label:"現預金残高はfreeeの残高と通帳・銀行明細が一致しているか",
+            note:"「口座」メニューで各口座の期末残高を確認。外貨口座は期末TTMで換算",
+            detail:`<span class="d-label">確認手順</span><p>freeeの「口座」→各口座を選択し期末日の残高を確認します。銀行連携している場合でも、連携エラーや手動修正が入っているケースがあるため、通帳残高証明書との最終照合が必要です。</p>`
+          },
+          { label:"売掛金・未収入金の残高は取引先別に正確か",
+            note:"freeeの「残高確認レポート」または「取引先別残高」で確認。長期滞留債権を洗い出す",
+            detail:`<span class="d-label">確認手順</span><p>「レポート」→「残高試算表」で売掛金残高を確認後、「取引」一覧で取引先別・未決済でフィルタをかけて内訳を確認します。3ヶ月以上回収できていない取引先は貸倒引当金の検討が必要です。</p>`
+          },
+          { label:"買掛金・未払金の残高は請求書・支払予定と一致しているか",
+            note:"期末日以前の請求書で未払計上されていないものがないか確認"
+          },
+          { label:"freeeの固定資産台帳と実物は一致しているか",
+            note:"「固定資産台帳」メニューで確認。除売却済み資産・未登録資産がないか",
+            detail:`<span class="d-label">確認手順</span><p>freeeの「固定資産台帳」で一覧を確認します。当期に除売却した資産は除却・売却処理が完了しているか確認します。freeeの減価償却は「減価償却を実行」ボタンで手動実行が必要です。実行忘れに注意してください。</p>`
+          },
+          { label:"借入金の残高は返済予定表と一致しているか。1年内返済分は流動負債に振り替えたか",
+            note:"freeeでは「長期借入金」と「短期借入金（1年内返済）」を手動で振替仕訳する必要あり"
+          },
+          { label:"仮払金・仮受金・立替金の残高がある場合、内容を確認し精算・振替を完了させたか",
+            note:"freeeで勘定科目「仮払金」「仮受金」の残高がゼロか確認"
+          },
+        ]
+      },
+      {
+        title:"期末決算整理仕訳",
+        items:[
+          { label:"freeeで減価償却の「実行」を行ったか",
+            note:"固定資産台帳→「減価償却を実行」ボタン。期末に必ず手動実行が必要",
+            detail:`<span class="d-label">注意点</span><p>freeeの減価償却は自動では実行されません。「固定資産台帳」→「減価償却を実行」ボタンを押すことで仕訳が自動生成されます。実行後に仕訳が正しく生成されているか確認してください。期中取得資産の月割計算も確認します。</p>`
+          },
+          { label:"未払費用・未収収益・前払費用・前受収益の計上仕訳を入力したか",
+            note:"freeeで手動仕訳を入力。決算仕訳として「決算整理」タグをつけておくと管理しやすい",
+            detail:`<span class="d-label">よくある計上漏れ</span><ul><li>未払給与（月末締翌月払→末日分未払計上）</li><li>未払社会保険料（会社負担分）</li><li>前払費用（翌期分の保険料・地代家賃等）</li><li>未収売上（検収基準の場合の期末未検収分）</li><li>前受収益（翌期分のサービス収益等）</li></ul>`
+          },
+          { label:"棚卸資産の期末残高を実地棚卸の結果でfreeeに反映したか",
+            note:"棚卸減耗・評価損がある場合は別途計上。freeeでは手動仕訳で入力"
+          },
+          { label:"賞与引当金・退職給付引当金を計上したか（計上方針に従って）",
+            note:"freeeでは手動仕訳で計上。翌期に取崩仕訳も合わせて準備する"
+          },
+          { label:"法人税等・消費税の未払計上仕訳を入力したか",
+            note:"中間納付額を控除した確定見込額を「未払法人税等」「未払消費税等」で計上",
+            detail:`<span class="d-label">freeeでの入力方法</span><div class="code-box">借方：法人税・住民税及び事業税  ×××円
+貸方：未払法人税等              ×××円
+
+借方：租税公課（消費税）        ×××円
+貸方：未払消費税等              ×××円</div><p>確定申告後に実際の税額との差額調整仕訳が必要です。</p>`
+          },
+          { label:"外貨建取引がある場合、期末レート（TTM）で換算替え仕訳を入力したか",
+            note:"freeeでは外貨取引に対応しているが、期末換算替えは手動仕訳が必要"
+          },
+        ]
+      },
+      {
+        title:"freeeレポートによる最終確認",
+        items:[
+          { label:"freeeの「残高試算表（貸借対照表・損益計算書）」に異常な残高・マイナスがないか",
+            note:"「レポート」→「残高試算表」で確認。資産のマイナス・負債のマイナスは入力ミスの可能性",
+            detail:`<span class="d-label">よくある異常残高パターン</span><ul><li>現金がマイナス→小口現金の入力漏れまたは二重計上</li><li>売掛金がマイナス→入金先の科目ミスまたは過剰消込</li><li>費用科目にマイナス残高→貸方仕訳の科目誤り</li></ul>`
+          },
+          { label:"freeeの「仕訳帳」で期末日前後の仕訳に不自然なものがないか",
+            note:"大きな金額・普段使わない勘定科目・摘要が空白の仕訳を重点確認"
+          },
+          { label:"BSの前期末残高とfreeeの前期繰越残高が一致しているか",
+            note:"前期申告書のBSと照合。freeeの「前期繰越」を確認"
+          },
+          { label:"当期純利益がBSの利益剰余金増加額と一致しているか",
+            note:"PL当期純利益 ＝ BS期末利益剰余金 − BS期首利益剰余金 ± 配当等"
+          },
+          { label:"freeeの「消費税集計」と消費税申告書の課税売上・課税仕入が一致しているか",
+            note:"「税務」→「消費税集計」で確認。申告書作成前に必ず照合する",
+            detail:`<span class="d-label">確認手順</span><p>freeeの「税務」→「消費税集計」で税率・税区分別の集計を確認します。消費税申告書の第一表・第二表の数字と一致しているかを照合してください。差異がある場合は税区分の設定ミスを疑います。</p>`
+          },
+          { label:"freeeから出力した決算書（BS・PL・株主資本等変動計算書）を確認したか",
+            note:"「レポート」→各財務諸表をPDF出力し、数値を最終確認"
+          },
+        ]
+      },
+    ]
+  },
+  {
+    id:"corp", type:"corp", label:"法人税（freee申告）", tag:"CORPORATION TAX",
+    groups:[
+      {
+        title:"freee申告への会計データ連携",
+        items:[
+          { label:"freee会計の決算仕訳がすべて確定しており、freee申告に正しく連携されているか",
+            note:"freee申告「法人税」→「会計データ取込」で最新データを取込済みか確認",
+            detail:`<span class="d-label">確認手順</span><p>freee申告の「法人税申告書」→「会計データ取込」から最新の会計データを取り込みます。決算整理仕訳の追加・修正後は必ず再取込が必要です。取込後にBS・PLの数値が会計側と一致しているかを確認します。</p>`
+          },
+          { label:"freee申告上のBS・PL数値がfreee会計の残高試算表と一致しているか",
+            note:"取込後に「財務諸表」タブで金額を突合。差異がある場合は会計側の仕訳を修正して再取込",
+            noteType:"caution"
+          },
+          { label:"freee申告の「事業所情報」は登記情報と一致しているか",
+            note:"資本金・商号・所在地・代表者名・法人番号を登記簿謄本と突合",
+            detail:`<span class="d-label">確認箇所</span><p>freee申告の「基本情報」タブで事業所情報を確認します。資本金が1億円を超えるかどうかで中小企業特例の適用可否が変わるため、端数まで正確に入力してください。増資・減資があった場合は特に要確認です。</p>`,
+            links:[{label:"法人番号公表サイト（国税庁）", url:"https://www.houjin-bangou.nta.go.jp/"}]
+          },
+          { label:"業種コード（事業種目）はfreee申告上で適切に設定されているか",
+            note:"freee申告「基本情報」タブで確認。主たる事業に対応したコードを選択",
+            links:[{label:"事業種目コード一覧（国税庁）", url:"https://www.nta.go.jp/taxes/tetsuzuki/shinsei/annai/hojin/annai/1554_23.htm"}]
+          },
+          { label:"還付金振込口座はfreee申告に正しく入力されているか",
+            note:"freee申告「基本情報」→「還付先口座」で確認"
+          },
+        ]
+      },
+      {
+        title:"株主・出資者情報",
+        items:[
+          { label:"freee申告の別表二（同族会社等の判定）は株主名簿と一致しているか",
+            note:"freee申告「別表二」タブで入力。VCが入っている場合は種類株式も含めて確認",
+            detail:`<span class="d-label">確認ポイント</span><p>freee申告の「別表二」に株主情報を入力します。VCが複数ラウンドで出資している場合、普通株・優先株（種類株式）ごとに持株比率を正確に入力する必要があります。同族会社の自動判定結果が正しいかも確認してください。</p>`
+          },
+          { label:"同族会社に該当する場合、留保金課税（特定同族会社）の要否をfreee申告上で確認したか",
+            note:"資本金1億円超の場合は別表三（一）が自動生成されるか確認", noteType:"warning",
+            detail:`<span class="d-label">freeeでの確認</span><p>freee申告では同族会社判定後、特定同族会社に該当する場合に別表三（一）が生成されます。資本金1億円超かつ被支配会社の要件に該当する場合は自動計算結果を必ず確認してください。</p>`
+          },
+          { label:"大法人（資本金5億円以上）の100%子法人に該当しないか",
+            note:"中小企業特例が適用除外となる。freee申告の基本情報で判定される", noteType:"caution"
+          },
+        ]
+      },
+      {
+        title:"予定納税・中間納付・源泉税",
+        items:[
+          { label:"予定納税・中間納付の金額はfreee申告に正確に入力されているか",
+            note:"前期確定税額の1/2が原則。e-Taxの納付情報または領収書で確認し入力",
+            detail:`<span class="d-label">前期確定税額から中間納付額を自動計算</span><div style='margin:8px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;'><label style='font-size:0.75rem;color:#2a3a50;white-space:nowrap;'>前期法人税確定税額（円）</label><input id='prevTaxAmt' type='number' placeholder='例：2000000' style='border:1px solid #b8cfe8;border-radius:3px;padding:4px 8px;font-size:0.78rem;width:160px;outline:none;font-family:inherit;' oninput='calcYotei()'></div><div class='code-box' id='yoteiResult' style='min-height:48px;'>金額を入力すると中間納付額が表示されます</div><p style='margin-top:6px;'>freee申告では「別表一」の中間納付欄に入力します。地方税（法人住民税・事業税）の中間納付はfreee申告の地方税タブで別途入力が必要です。</p>`
+          },
+          { label:"源泉所得税（預金利息・配当等）の金額はfreee申告の別表六（一）に正確に入力されているか",
+            note:"通帳の利息入金記録・支払調書で確認。freee申告で自動入力されない場合は手動入力",
+            detail:`<span class="d-label">対象となる源泉所得税</span><div class="code-box">預金利息    ：利息×15.315%（税引後入金額から逆算）
+受取配当金  ：支払調書の源泉税額欄を確認
+原稿料等   ：支払調書 10.21%</div><p>freee申告「別表六（一）」タブで入力します。漏れると還付額が少なくなります。</p>`
+          },
+        ]
+      },
+      {
+        title:"売上・損益・加減算項目の確認",
+        items:[
+          { label:"前期比で売上・利益に大きな変動がある場合、その原因を法人事業概況説明書に記載したか",
+            note:"freee申告「法人事業概況説明書」タブの「事業の概況」欄に記載", noteType:"warning"
+          },
+          { label:"収益・費用は発生主義で計上されているか（未払・未収・前払・前受の処理）",
+            note:"freee会計での決算整理仕訳の入力漏れがないか最終確認", noteType:"warning",
+            detail:`<span class="d-label">よくある計上漏れ</span><ul><li>未払給与・未払社会保険料</li><li>前払費用（翌期分の保険料・地代家賃等）</li><li>未収売上（検収基準の場合の期末未検収分）</li><li>補助金・受贈益・債務免除益の計上漏れ</li></ul>`
+          },
+          { label:"受取配当金の益金不算入計算はfreee申告の別表八（一）で正しく計算されているか",
+            note:"株式の保有割合・保有期間を確認。freee申告で自動計算される場合も数値を確認",
+            detail:`<span class="d-label">益金不算入割合</span><div class="code-box">完全子法人株式等（100%保有）    → 100%
+関連法人株式等（1/3超保有）     → 100%（負債利子控除あり）
+その他株式等（5%超1/3以下）     → 50%
+非支配目的株式等（5%以下）      → 20%</div>`
+          },
+        ]
+      },
+      {
+        title:"給与・役員報酬",
+        items:[
+          { label:"役員報酬はfreee会計上で定期同額・事前確定届出給与の要件を満たした金額で計上されているか",
+            note:"期中の変更がある場合、損金不算入額をfreee申告「別表四」で加算しているか確認", noteType:"caution",
+            links:[{label:"国税庁：役員給与Q&A", url:"https://www.nta.go.jp/taxes/shiraberu/taxanswer/hojin/5209.htm"}]
+          },
+          { label:"役員賞与を計上している場合、事前確定届出給与の届出どおりの金額か",
+            note:"届出額と支給額が1円でも違うと全額損金不算入。freee申告「別表四」で加算要否を確認", noteType:"caution",
+            links:[{label:"国税庁：事前確定届出給与", url:"https://www.nta.go.jp/taxes/shiraberu/taxanswer/hojin/5208.htm"}]
+          },
+          { label:"賃上げ促進税制の適用可否を検討し、freee申告の別表六（二十九）に入力したか",
+            note:"中小企業：前年比1.5%以上で15%控除、2.5%以上で30%控除（2024年度改正）",
+            detail:`<span class="d-label">freeeでの入力</span><p>freee申告「別表六（二十九）」タブで継続雇用者給与等支給額の前期比増加率を入力します。freee人事労務と連携している場合は給与データが参照できます。適用額明細書への自動反映も確認してください。</p>`,
+            links:[{label:"経済産業省：賃上げ促進税制", url:"https://www.meti.go.jp/policy/economy/jinzai/syotokukoujyo/"}]
+          },
+          { label:"役員退職金を計上している場合、功績倍率法等で相当性を検討し、過大部分をfreee申告「別表四」で加算したか",
+            note:"過大役員退職金は損金不算入"
+          },
+        ]
+      },
+      {
+        title:"租税特別措置・税額控除",
+        items:[
+          { label:"試験研究費（研究開発費）がある場合、freee申告の別表六（六）等に入力し税額控除を計算したか",
+            note:"黒字の場合は必ず検討。新製品開発・ソフトウェア開発等も対象になりうる",
+            detail:`<span class="d-label">freeeでの入力</span><p>freee申告「別表六（六）」等のタブに試験研究費の明細を入力します。中小企業技術基盤強化型の場合は控除率12%（最大17%）、控除限度額は法人税額の25%（一定要件で35%）です。</p>`,
+            links:[{label:"国税庁：試験研究費の税額控除", url:"https://www.nta.go.jp/taxes/shiraberu/taxanswer/hojin/5450.htm"}]
+          },
+          { label:"中小企業投資促進税制・経営強化税制の対象設備がある場合、freee申告で別表を作成したか",
+            links:[{label:"中小企業庁：中小企業経営強化税制", url:"https://www.chusho.meti.go.jp/keiei/kyoka/"}]
+          },
+          { label:"freee申告の「適用額明細書」にすべての租税特別措置が漏れなく反映されているか",
+            note:"freee申告では各別表入力後に適用額明細書が自動生成されるが、手動入力分の漏れに注意", noteType:"caution",
+            detail:`<span class="d-label">記載が必要な主な措置</span><div class="code-box">賃上げ促進税制       → 別表六（二十九）→ 適用額明細に自動反映
+試験研究費の控除     → 別表六（六）等 → 適用額明細に自動反映
+中小投資促進税制     → 別表六（十）等 → 適用額明細に自動反映
+交際費の損金算入特例  → freee申告で自動計算・明細反映
+少額減価償却（30万円未満）→ 適用額明細に反映されているか手動確認
+セーフティ共済       → 条項66条の11第1項 区分00374</div>`
+          },
+          { label:"交際費等の損金算入限度額の計算はfreee申告で正しく計算されているか",
+            note:"中小法人：年800万円全額 or 接待飲食費50%の有利選択。freee申告が自動計算するが金額を確認",
+            links:[{label:"国税庁：交際費等の範囲と損金不算入額", url:"https://www.nta.go.jp/taxes/shiraberu/taxanswer/hojin/5265.htm"}]
+          },
+        ]
+      },
+      {
+        title:"損金算入項目・特別措置",
+        items:[
+          { label:"減価償却はfreee会計で「減価償却を実行」済みか。freee申告の別表十六と一致しているか",
+            note:"freee申告「別表十六」の償却額がfreee会計の減価償却費と一致しているか確認",
+            detail:`<span class="d-label">確認ポイント</span><p>freee会計で「固定資産台帳」→「減価償却を実行」を行った後、freee申告「別表十六」で償却超過額・認容額が正しく計算されているか確認します。償却超過額は「別表四」で加算されます。</p>`
+          },
+          { label:"経営セーフティ共済掛金はfreee申告「別表十（七）」に入力し、適用額明細書に記載されているか",
+            note:"記載漏れで適用が否認されるリスクあり", noteType:"caution",
+            detail:`<span class="d-label">適用額明細書への記載内容</span><div class="code-box">租税特別措置法の条項：第66条の11第1項
+区分番号            ：00374
+適用額              ：損金算入した金額</div>`,
+            links:[{label:"中小機構：経営セーフティ共済 申告の手引き", url:"https://kyosai-faq.smrj.go.jp/tkyosai/index.php?action=faq&id=143"}]
+          },
+          { label:"少額減価償却資産（30万円未満）の即時償却を適用している場合、年300万円の限度額をfreee申告上で確認したか",
+            note:"中小企業者等のみ適用可。freee申告「別表十六（七）」で確認", noteType:"warning"
+          },
+          { label:"保険料（生命保険等）の損金算入・資産計上区分は2019年改正後のルールどおりにfreee会計で処理されているか",
+            links:[{label:"国税庁：定期保険等の取扱い変更", url:"https://www.nta.go.jp/law/tsutatsu/kobetsu/hojin/kaisei/191007/index.htm"}]
+          },
+          { label:"繰越欠損金の控除額・残額はfreee申告の別表七で正確に管理されているか",
+            note:"前期申告書と突合。freee申告が前期データを引き継いでいるか確認",
+            detail:`<span class="d-label">控除限度額</span><div class="code-box">中小法人等（資本金1億円以下等）：所得金額の100%まで控除可
+大法人（資本金1億円超）        ：所得金額の50%まで控除可
+繰越期間：最大10年（平成27年度以降発生分）</div>`
+          },
+          { label:"欠損金の繰戻還付の適用可否を検討したか",
+            note:"中小法人等で前期黒字・当期赤字の場合。freee申告から還付請求書を出力できるか確認"
+          },
+        ]
+      },
+      {
+        title:"別表・添付書類の最終確認",
+        items:[
+          { label:"freee申告の「エラー・警告」表示がすべて解消されているか",
+            note:"freee申告のチェック機能で表示されるエラー・警告を必ず確認・解消してから送信", noteType:"caution",
+            detail:`<span class="d-label">freee申告のチェック機能</span><p>freee申告では申告書作成後に「チェック」ボタンでエラー・警告を確認できます。エラーは修正必須、警告は内容を確認の上で判断します。送信前に必ずゼロにしてください。</p>`
+          },
+          { label:"freee申告から出力した決算報告書（BS・PL・株主資本等変動計算書）はfreee会計の数値と一致しているか" },
+          { label:"勘定科目内訳書はfreee申告で正しく自動生成されているか",
+            note:"現預金・売掛金・棚卸資産・固定資産・借入金・役員報酬等。自動生成されない科目は手動入力"
+          },
+          { label:"法人事業概況説明書はfreee申告上で記載・添付されているか",
+            note:"freee申告「法人事業概況説明書」タブで入力。事業の概況欄への記載を忘れずに"
+          },
+          { label:"別表五（二）（租税公課の納付状況）の期末未納税額とfreee会計のBS（未払法人税等）は一致しているか" },
+          { label:"freee申告でe-Tax送信する前に、送信データのプレビューで全ページを目視確認したか",
+            noteType:"caution",
+            detail:`<span class="d-label">送信前の最終確認</span><p>freee申告の「送信」ボタンを押す前に、申告書のPDFプレビューで全ページを確認します。特に別表一の税額・還付額、別表四の所得金額、適用額明細書の記載を重点確認してください。</p>`
+          },
+          { label:"地方税（都道府県民税・市町村民税・事業税・特別法人事業税）もfreee申告から同時に送信するか",
+            note:"freee申告では法人税と地方税を一括送信できる。送信対象に漏れがないか確認"
+          },
+        ]
+      },
+    ]
+  },
+  {
+    id:"ctax", type:"tax", label:"消費税（freee申告）", tag:"CONSUMPTION TAX",
+    groups:[
+      {
+        title:"freee申告への消費税データ連携",
+        items:[
+          { label:"freee会計の消費税集計がfreee申告に正しく連携されているか",
+            note:"freee申告「消費税申告書」→「会計データ取込」で最新データを取込済みか確認",
+            detail:`<span class="d-label">確認手順</span><p>freee申告の消費税申告書から「会計データ取込」を実行します。freee会計側で税区分の修正・仕訳の追加を行った場合は必ず再取込が必要です。取込後に課税売上・課税仕入の金額がfreee会計の「消費税集計」と一致しているか確認します。</p>`
+          },
+          { label:"freee会計の「消費税集計」（税務→消費税集計）の数値に不自然な税区分・金額がないか",
+            note:"申告書作成前に必ずfreee会計側の集計を確認。税区分ミスはここで発見できる",
+            detail:`<span class="d-label">確認手順</span><p>freee会計「税務」→「消費税集計」で税率・税区分別の集計を確認します。差異がある場合は仕訳の税区分設定ミスを疑い、「取引」一覧で該当仕訳を修正した後に再取込します。</p>`
+          },
+        ]
+      },
+      {
+        title:"納税義務・申告方法の確認",
+        items:[
+          { label:"課税事業者（インボイス登録事業者）の届出はfreee申告の基本情報に反映されているか",
+            note:"登録番号を国税庁サイトで確認し、freee申告に入力されているか確認",
+            links:[{label:"インボイス登録番号検索（国税庁）", url:"https://www.invoice-kohyo.nta.go.jp/"}]
+          },
+          { label:"freee申告で選択している申告方法（原則課税・簡易課税）は正しいか",
+            note:"freee申告「消費税申告書」→「基本設定」で申告方法を確認",
+            detail:`<span class="d-label">確認ポイント</span><p>freee申告の消費税申告書「基本設定」で原則課税・簡易課税の選択を確認します。簡易課税を選択している場合、基準期間（2期前）の課税売上高が5,000万円以下であることを確認してください。選択が誤っていると申告書全体が無効になります。</p>`
+          },
+          { label:"簡易課税の場合、基準期間（2期前）の課税売上高が5,000万円を超えていないか",
+            note:"超えている場合は原則課税に強制変更。freee申告が自動判定しない場合は手動確認", noteType:"caution"
+          },
+          { label:"課税事業者選択届出書・簡易課税選択届出書の提出状況とfreee申告の設定が一致しているか" },
+        ]
+      },
+      {
+        title:"インボイス制度対応（2023年10月〜）",
+        items:[
+          { label:"freee会計でインボイス（登録番号付き）と未登録取引先の仕訳が正しく区分されているか",
+            note:"freee会計の取引先マスタにインボイス登録番号が設定されているか確認",
+            detail:`<span class="d-label">freeeでの確認方法</span><p>freee会計「設定」→「取引先」で各取引先のインボイス登録番号の入力状況を確認します。登録番号が未入力の取引先からの仕入は経過措置の対象として区分する必要があります。freee会計では税区分「課税仕入（経過措置80%）」等で区分できます。</p>`,
+            links:[{label:"インボイス登録番号確認（国税庁）", url:"https://www.invoice-kohyo.nta.go.jp/"}]
+          },
+          { label:"インボイス経過措置の適用税率・計算と2026年10月以降の切替対応は済んでいるか",
+            note:"2026年9月末で80%控除終了→10月から50%控除へ。freeeの税区分設定の切替タイミングも確認", noteType:"warning",
+            detail:`<span class="d-label">経過措置スケジュールとfreeeの対応</span><div class="code-box">2023年10月1日〜2026年9月30日：80%控除（税区分：課税仕入80%）
+2026年10月1日〜2029年9月30日：50%控除（税区分：課税仕入50%）
+2029年10月1日〜              ：控除不可</div><p><b>【2026年10月以降に向けた実務対応チェック】</b></p><ul><li>未登録取引先リストを把握し、freee会計の取引先マスタで管理しているか</li><li>2026年10月以降の影響額（控除減少分）を試算したか</li><li>取引先へのインボイス登録打診・価格交渉の方針を決定したか</li><li>freeeの税区分「課税仕入80%」→「課税仕入50%」への切替タイミングをシステム担当者と確認したか</li></ul>`,
+            links:[{label:"国税庁：インボイス経過措置", url:"https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keikasochi/index.htm"}]
+          },
+          { label:"2割特例の適用可否を確認し、freee申告で正しく設定したか",
+            note:"2026年9月末までの申告が対象。freee申告「基本設定」で2割特例を選択できる",
+            detail:`<span class="d-label">freeeでの設定</span><div class="code-box">対象者：インボイス登録を機に免税→課税になった事業者
+特例  ：納付消費税額 ＝ 課税標準×10%の2割（実質負担率2%）</div><p>freee申告の消費税申告書「基本設定」で「2割特例」を選択します。届出不要で適用可能です。</p>`,
+            links:[{label:"国税庁：2割特例", url:"https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keikasochi/02wari.htm"}]
+          },
+          { label:"少額特例（1万円未満）の取扱いはfreee会計の仕訳入力で正しく適用されているか",
+            note:"基準期間の課税売上高1億円以下等の要件を確認。freee会計で証憑なしでも仕入税額控除可"
+          },
+        ]
+      },
+      {
+        title:"簡易課税の計算（簡易課税選択の場合のみ）",
+        items:[
+          { label:"freee申告上の事業区分（第一種〜第六種）の設定は正しいか",
+            note:"freee申告「消費税申告書」→「事業区分」タブで確認",
+            detail:`<span class="d-label">みなし仕入率一覧</span><div class="code-box">第一種（卸売業）          → 90%
+第二種（小売業・農林漁業） → 80%
+第三種（製造業・建設業等） → 70%
+第四種（飲食業・その他）  → 60%
+第五種（サービス業・金融） → 50%
+第六種（不動産業）         → 40%</div><p>freee申告では売上を事業区分別に入力すると自動でみなし仕入率を適用し消費税額を計算します。</p>`,
+            links:[{label:"国税庁：簡易課税の事業区分", url:"https://www.nta.go.jp/taxes/shiraberu/taxanswer/shohi/6509.htm"}]
+          },
+          { label:"複数事業の場合、有利選択（加重平均 or 75%ルール）がfreee申告上で適用されているか" },
+          { label:"基準期間の課税売上高はfreee申告に正確に入力されているか" },
+        ]
+      },
+      {
+        title:"税額計算・申告書の最終確認",
+        items:[
+          { label:"freee会計の税区分（標準10%・軽減8%・不課税等）の設定は全仕訳で正確か",
+            note:"freee会計「消費税集計」で税率別の集計を確認。8%と10%の区分ミスに注意",
+            detail:`<span class="d-label">軽減税率8%の対象</span><ul><li>飲食料品（酒類・外食・ケータリングは除く）</li><li>定期購読契約の新聞（週2回以上発行）</li></ul><p>freee会計では品目・勘定科目ごとにデフォルト税率が設定できます。設定ミスが多い場合はデフォルト設定の見直しを検討してください。</p>`
+          },
+          { label:"中間申告・中間納付の金額はfreee申告に正確に入力されているか" },
+          { label:"還付申告の場合、課税売上割合の著しい変動（変動調整）をfreee申告上で確認したか",
+            note:"大きな設備投資があった年度は要確認", noteType:"warning"
+          },
+          { label:"freee申告の消費税申告書とfreee会計の損益計算書（消費税額）は整合しているか",
+            note:"税込経理の場合は租税公課、税抜経理の場合は仮払・仮受消費税の残高で確認"
+          },
+          { label:"freee申告の「エラー・警告」（消費税）がすべて解消されているか",
+            note:"送信前にチェック機能で確認。警告も内容を精査してから送信", noteType:"caution"
+          },
+          { label:"freee申告からe-Tax送信する前に、消費税申告書のPDFプレビューで税額・還付額を目視確認したか" },
+        ]
+      },
+    ]
+  },
+  {
+    id:"common", type:"common", label:"共通・最終確認", tag:"FINAL CHECK",
+    groups:[
+      {
+        title:"電子帳簿保存法への対応",
+        items:[
+          { label:"電子取引データ（メール・クラウドサービス等で受領した請求書等）は電子保存しているか", note:"2024年1月1日以降、紙での代替保存は原則不可", noteType:"caution",
+            detail:`<span class="d-label">電子取引データ保存の要件</span><ul><li>真実性の確保：タイムスタンプ付与 または 訂正削除防止規程の整備</li><li>可視性の確保：検索機能（日付・金額・取引先）の確保</li></ul><p>PDFをメールで受領した請求書等は電子データとして保存する義務があります。一度印刷してスキャナ保存に切り替える方法は認められません。</p>`,
+            links:[{label:"国税庁：電子帳簿保存法の概要", url:"https://www.nta.go.jp/law/joho-zeikaishaku/sonota/jirei/4-3.htm"}]
+          },
+          { label:"スキャナ保存を行っている書類について、タイムスタンプ等の要件を満たしているか" },
+        ]
+      },
+      {
+        title:"申告・納付スケジュール",
+        items:[
+          { label:"申告期限（原則：事業年度終了の翌日から2ヶ月以内）を確認したか",
+            detail:`<span class="d-label">延長制度の注意点</span><div class="code-box">定款等で株主総会が決算後3ヶ月以内の法人 → 申告期限の延長申請で3ヶ月以内
+会計監査人設置会社 → 最大4ヶ月延長可</div><p>消費税は法人税と異なり延長制度がないため、法人税を延長している場合も消費税は原則2ヶ月以内に申告・納付が必要です。</p>`
+          },
+          { label:"申告期限の延長が必要な場合、届出書は提出済みか" },
+          { label:"納付期限・延滞税の発生リスクを確認したか", noteType:"warning", note:"延滞税は期限翌日から発生",
+            detail:`<span class="d-label">延滞税率（令和6年・変動制）</span><div class="code-box">期限翌日から2ヶ月以内：年2.4%程度
+2ヶ月超             ：年8.7%程度</div><p>見込み納付（仮払い）を行っておくと延滞税を最小限に抑えられます。</p>`
+          },
+          { label:"税務調査対応として、証拠書類・議事録・契約書等の保存状況を確認したか" },
+        ]
+      },
+      {
+        title:"翌期以降への引継ぎ事項",
+        items:[
+          { label:"翌期の予定納税額に影響する事項（青色欠損金残高等）を申送り事項として記録したか" },
+          { label:"届出書の提出が必要な事項で翌期以降に期限があるものを把握したか", note:"簡易課税の選択・変更等" },
+          { label:"役員報酬の改定予定（定時株主総会後の変更可能時期）を確認したか" },
+        ]
+      },
+    ]
+  }
+];
+
+// ── STATE ──
+const state = {};
+const memos = {};
+const detailOpen = {}; // 詳細パネルの開閉状態を永続管理
+let allCollapsed = false;
+
+function initState() {
+  DATA.forEach(sec => {
+    sec.groups.forEach(g => {
+      const mk = `memo_${sec.id}_${g.title}`;
+      if (!(mk in memos)) memos[mk] = '';
+      g.items.forEach((_, i) => {
+        const k = `${sec.id}_${g.title}_${i}`;
+        if (!(k in state)) state[k] = 'none'; // none | checked | na
+      });
+    });
+  });
+}
+
+function getKey(s, gt, i) { return `${s}_${gt}_${i}`; }
+function getMemoKey(s, gt) { return `memo_${s}_${gt}`; }
+
+function render() {
+  initState();
+  const container = document.getElementById('mainContent');
+  container.innerHTML = '';
+  let no = 1;
+
+  DATA.forEach(sec => {
+    const secEl = document.createElement('div');
+    secEl.className = 'section';
+    secEl.id = `sec-${sec.id}`;
+
+    const total   = sec.groups.reduce((a,g) => a + g.items.length, 0);
+    const checked = sec.groups.reduce((a,g) => a + g.items.filter((_,i) => state[getKey(sec.id,g.title,i)] === 'checked').length, 0);
+    const na_cnt  = sec.groups.reduce((a,g) => a + g.items.filter((_,i) => state[getKey(sec.id,g.title,i)] === 'na').length, 0);
+
+    const header = document.createElement('div');
+    header.className = `section-header ${sec.type}`;
+    header.innerHTML = `
+      <div class="section-title"><span>${sec.label}</span><span class="section-tag">${sec.tag}</span></div>
+      <div class="section-meta">
+        <span class="section-count">${checked} / ${total - na_cnt}${na_cnt > 0 ? ` <span style="opacity:0.6;font-size:0.7em">（該当なし ${na_cnt}）</span>` : ''}</span>
+        <span class="toggle-icon open" id="icon-${sec.id}">▼</span>
+      </div>`;
+    header.onclick = () => toggleSection(sec.id);
+
+    const body = document.createElement('div');
+    body.className = 'section-body';
+    body.id = `body-${sec.id}`;
+
+    sec.groups.forEach(g => {
+      const subEl = document.createElement('div');
+      subEl.className = 'subsection';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'subsection-title';
+      titleEl.textContent = g.title;
+      subEl.appendChild(titleEl);
+
+      g.items.forEach((item, i) => {
+        const key      = getKey(sec.id, g.title, i);
+        const stateVal = state[key]; // 'none' | 'checked' | 'na'
+        const isChecked = stateVal === 'checked';
+        const isNa      = stateVal === 'na';
+        const itemNo   = no++;
+        const hasDetail = !!(item.detail || (item.links && item.links.length));
+        const detailId = `dp-no-${itemNo}`; // グローバル連番で一意に保証
+        const btnId    = `btn-${detailId}`;
+
+        // check row
+        const row = document.createElement('div');
+        row.className = `check-item${isChecked ? ' checked' : isNa ? ' na' : ''}`;
+        row.dataset.key = key;
+        row.innerHTML = `
+          <div class="checkbox"><span class="check-icon">✓</span><span class="na-icon">—</span></div>
+          <div class="item-no">No.${itemNo}</div>
+          <div class="item-content">
+            <div class="item-label">${item.label}</div>
+            ${item.note ? `<div class="item-note ${item.noteType||''}">${item.note}</div>` : ''}
+          </div>
+          ${hasDetail ? `<button class="detail-btn${detailOpen[detailId] ? ' open' : ''}" id="${btnId}" onclick="toggleDetail('${detailId}','${btnId}',event)">${detailOpen[detailId] ? '詳細 ▴' : '詳細 ▾'}</button>` : ''}`;
+        row.onclick = (e) => { if (!e.target.closest('.detail-btn')) toggle(key, sec.id); };
+        subEl.appendChild(row);
+
+        // detail panel
+        if (hasDetail) {
+          let linksHtml = '';
+          if (item.links && item.links.length) {
+            linksHtml = `<div class="d-ref">${item.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener">${l.label} ↗</a>`).join('')}</div>`;
+          }
+          const dp = document.createElement('div');
+          dp.className = 'detail-panel' + (detailOpen[detailId] ? ' open' : '');
+          dp.id = detailId;
+          dp.innerHTML = (item.detail || '') + linksHtml;
+          subEl.appendChild(dp);
+        }
+      });
+
+      // group memo
+      const mk = getMemoKey(sec.id, g.title);
+      const memoWrap = document.createElement('div');
+      memoWrap.className = 'group-memo-wrap';
+      memoWrap.innerHTML = `
+        <div class="group-memo-label">📝 メモ・特記事項</div>
+        <textarea class="group-memo-input" placeholder="この項目グループに関する特記事項・対応状況を入力…" rows="2">${memos[mk]||''}</textarea>`;
+      memoWrap.querySelector('textarea').addEventListener('input', e => { memos[mk] = e.target.value; scheduleAutoSave(); });
+      subEl.appendChild(memoWrap);
+
+      body.appendChild(subEl);
+    });
+
+    secEl.appendChild(header);
+    secEl.appendChild(body);
+    container.appendChild(secEl);
+  });
+
+  updateStats();
+}
+
+function toggle(key) {
+  const cur = state[key] || 'none';
+  const next = cur === 'none' ? 'checked' : cur === 'checked' ? 'na' : 'none';
+  state[key] = next;
+  scheduleAutoSave();
+  // render()の代わりにDOMを直接更新（パネル開閉状態を保持するため）
+  _updateRow(key, next);
+  _updateSectionCount();
+  updateStats();
+}
+
+function _updateRow(key, val) {
+  // keyからrowを特定するためdata属性を使う
+  const row = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  if (!row) { render(); return; } // fallback
+  row.className = 'check-item' + (val === 'checked' ? ' checked' : val === 'na' ? ' na' : '');
+}
+
+function _updateSectionCount() {
+  DATA.forEach(sec => {
+    const chk = sec.groups.reduce((a,g) => a + g.items.filter((_,i) => state[getKey(sec.id,g.title,i)] === 'checked').length, 0);
+    const na  = sec.groups.reduce((a,g) => a + g.items.filter((_,i) => state[getKey(sec.id,g.title,i)] === 'na').length, 0);
+    const tot = sec.groups.reduce((a,g) => a + g.items.length, 0);
+    const el  = document.querySelector(`#sec-${sec.id} .section-count`);
+    if (el) el.innerHTML = `${chk} / ${tot - na}` + (na > 0 ? ` <span style="opacity:0.6;font-size:0.7em">（該当なし ${na}）</span>` : '');
+  });
+}
+
+function toggleDetail(dpId, btnId, e) {
+  e.stopPropagation();
+  const dp  = document.getElementById(dpId);
+  const btn = document.getElementById(btnId);
+  if (!dp) return;
+  const isOpen = dp.classList.toggle('open');
+  detailOpen[dpId] = isOpen; // 開閉状態を永続管理
+  btn.classList.toggle('open', isOpen);
+  btn.textContent = isOpen ? '詳細 ▴' : '詳細 ▾';
+}
+
+function toggleSection(id) {
+  document.getElementById(`body-${id}`).classList.toggle('collapsed');
+  document.getElementById(`icon-${id}`).classList.toggle('open');
+}
+
+function toggleAll() {
+  allCollapsed = !allCollapsed;
+  DATA.forEach(sec => {
+    const body = document.getElementById(`body-${sec.id}`);
+    const icon = document.getElementById(`icon-${sec.id}`);
+    body.classList.toggle('collapsed', allCollapsed);
+    icon.classList.toggle('open', !allCollapsed);
+  });
+}
+
+
+
+// ── 予定納税・中間納付 自動計算 ──
+function calcYotei() {
+  const amt = parseFloat(document.getElementById('prevTaxAmt').value) || 0;
+  const el  = document.getElementById('yoteiResult');
+  if (!el) return;
+  if (!amt) { el.textContent = '金額を入力すると中間納付額が表示されます'; return; }
+  const chukan      = Math.floor(amt / 2);          // 法人税中間（1/2）
+  const jyumin_ken  = Math.floor(amt * 0.207 / 2);  // 道府県民税（概算20.7%）
+  const jyumin_shi  = Math.floor(amt * 0.058 / 2);  // 市町村民税（概算5.8%）の半額 ※標準税率参考値
+  const jigyou_est  = Math.floor(amt * 0.07 / 2);   // 事業税（概算7%・標準税率参考値）
+  el.innerHTML =
+    '法人税中間納付（前期確定の1/2）　　：' + chukan.toLocaleString() + ' 円\n' +
+    '地方税中間（道府県民税・概算）　　　：' + jyumin_ken.toLocaleString() + ' 円\n' +
+    '地方税中間（市町村民税・概算）　　　：' + jyumin_shi.toLocaleString() + ' 円\n' +
+    '事業税中間（概算・標準税率）　　　　：' + jigyou_est.toLocaleString() + ' 円\n' +
+    '─────────────────────\n' +
+    '※地方税・事業税は自治体・業種により異なります。e-Taxの通知額で最終確認してください。';
+}
+
+function toggleHelp() {
+  const panel = document.getElementById('helpPanel');
+  panel.classList.toggle('open');
+}
+
+function resetAll() {
+  if (!confirm('全てのチェックとメモをリセットしますか？')) return;
+  Object.keys(state).forEach(k => state[k] = 'none');
+  Object.keys(memos).forEach(k => memos[k] = '');
+  lsSave();
+  render();
+}
+
+function updateStats() {
+  const keys    = Object.keys(state);
+  const total   = keys.length;
+  const chk     = keys.filter(k => state[k] === 'checked').length;
+  const na      = keys.filter(k => state[k] === 'na').length;
+  const remain  = total - chk - na;
+  const effective = total - na; // 該当なし除く実質対象
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statChecked').textContent   = chk;
+  document.getElementById('statRemaining').textContent = remain;
+  document.getElementById('statNa').textContent        = na;
+  const pct = effective > 0 ? Math.round(chk / effective * 100) : 0;
+  document.getElementById('statPct').textContent       = `進捗 ${pct}%`;
+  document.getElementById('progressBar').style.width   = pct + '%';
+}
+
+
+// ─────────────────────────────────────────────
+//  SAVE / LOAD / EXPORT
+// ─────────────────────────────────────────────
+
+let autoSaveEnabled = false;
+let autoSaveTimer   = null;
+const LS_KEY        = 'taxChecklist_v1';
+
+// ── Toast ──
+function toast(msg, type='info', duration=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, duration);
+}
+
+// ── JSON 保存 ──
+function saveJSON() {
+  const payload = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    state:   JSON.parse(JSON.stringify(state)),
+    memos:   JSON.parse(JSON.stringify(memos))
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const ts   = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `checklist_${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('💾 JSONを保存しました', 'success');
+}
+
+// ── JSON 読込 ──
+function loadJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.state) throw new Error('形式が不正です');
+      // stateのキーを既存キーに限定してマージ
+      Object.keys(state).forEach(k => {
+        if (k in data.state) state[k] = !!data.state[k];
+      });
+      Object.keys(memos).forEach(k => {
+        if (k in data.memos) memos[k] = data.memos[k] || '';
+      });
+      render();
+      const d = data.savedAt ? `（保存日時：${data.savedAt.slice(0,16).replace('T',' ')}）` : '';
+      toast(`📂 JSONを読み込みました${d}`, 'success');
+    } catch(err) {
+      toast(`❌ 読込失敗：${err.message}`, 'error', 4000);
+    }
+    event.target.value = ''; // 同じファイルを再選択できるようリセット
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ── CSV 出力 ──
+function exportCSV() {
+  const rows = [['No', '大項目', '小項目', 'チェック項目', '確認状態', 'メモ']];
+  let no = 1;
+  DATA.forEach(sec => {
+    sec.groups.forEach(g => {
+      const memo = (memos[getMemoKey(sec.id, g.title)] || '').replace(/\n/g, '／');
+      g.items.forEach((item, i) => {
+        const sv = state[getKey(sec.id, g.title, i)];
+        const checked = sv === 'checked' ? '済' : sv === 'na' ? '該当なし' : '未';
+        const label   = item.label.replace(/"/g, '""');
+        const memoTxt = (i === 0 ? memo : '').replace(/"/g, '""');
+        rows.push([no++, sec.label, g.title, `"${label}"`, checked, `"${memoTxt}"`]);
+      });
+    });
+  });
+  const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\r\n'); // BOM付きUTF-8でExcel対応
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const ts   = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `checklist_${ts}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📊 CSVを出力しました（Excel対応・BOM付き）', 'info');
+}
+
+// ── 自動保存（localStorage） ──
+function toggleAutoSave() {
+  autoSaveEnabled = !autoSaveEnabled;
+  const btn = document.getElementById('autoSaveToggle');
+  const sts = document.getElementById('autoSaveStatus');
+  if (autoSaveEnabled) {
+    btn.textContent = '🟢 ON';
+    btn.classList.add('green');
+    lsSave();
+    toast('🔄 自動保存をONにしました（このブラウザのみ有効）', 'info');
+  } else {
+    btn.textContent = '🔄 OFF';
+    btn.classList.remove('green');
+    sts.textContent = '';
+    sts.className = 'autosave-status';
+    toast('自動保存をOFFにしました', 'info');
+  }
+}
+
+function lsSave() {
+  if (!autoSaveEnabled) return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ state, memos, savedAt: new Date().toISOString() }));
+    const sts = document.getElementById('autoSaveStatus');
+    const now = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    sts.textContent = `最終自動保存：${now}`;
+    sts.className = 'autosave-status saved';
+  } catch(e) { /* localStorage無効環境 */ }
+}
+
+function lsLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data.state) return false;
+    Object.keys(state).forEach(k => {
+      if (!(k in data.state)) return;
+      const v = data.state[k];
+      state[k] = v === true ? 'checked' : v === false ? 'none' : v;
+    });
+    Object.keys(memos).forEach(k => { if (k in data.memos) memos[k] = data.memos[k] || ''; });
+    return data.savedAt || true;
+  } catch(e) { return false; }
+}
+
+// ── 自動保存トリガー：toggle / memo変更時に呼ぶ ──
+function scheduleAutoSave() {
+  if (!autoSaveEnabled) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(lsSave, 800);
+}
+
+// ── ページ起動時：localStorageに保存データがあれば自動復元を提案 ──
+(function() {
+  initState();
+  try {
+    const raw = localStorage.getItem('taxChecklist_v1');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data || !data.state || !data.savedAt) return;
+    const d = data.savedAt.slice(0, 16).replace('T', ' ');
+    const ok = confirm('前回の自動保存データが見つかりました。\n保存日時：' + d + '\n\n復元しますか？');
+    if (!ok) return;
+    Object.keys(state).forEach(k => {
+      if (!(k in data.state)) return;
+      const v = data.state[k];
+      state[k] = v === true ? 'checked' : v === false ? 'none' : (v || 'none');
+    });
+    if (data.memos) {
+      Object.keys(memos).forEach(k => {
+        if (k in data.memos) memos[k] = data.memos[k] || '';
+      });
+    }
+  } catch(e) {}
+})();
+
+render();
+</script>
+</body>
+</html>
