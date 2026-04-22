@@ -1114,13 +1114,18 @@ function loadJSON(event) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.state) throw new Error('形式が不正です');
-      // stateのキーを既存キーに限定してマージ
+      // stateのキーを既存キーに限定してマージ（3値: 'checked' / 'na' / 'none' を保持）
       Object.keys(state).forEach(k => {
-        if (k in data.state) state[k] = !!data.state[k];
+        if (!(k in data.state)) return;
+        const v = data.state[k];
+        // 旧boolean形式(true/false)との後方互換も維持
+        state[k] = v === true ? 'checked' : v === false ? 'none' : (v || 'none');
       });
-      Object.keys(memos).forEach(k => {
-        if (k in data.memos) memos[k] = data.memos[k] || '';
-      });
+      if (data.memos) {
+        Object.keys(memos).forEach(k => {
+          if (k in data.memos) memos[k] = data.memos[k] || '';
+        });
+      }
       render();
       const d = data.savedAt ? `（保存日時：${data.savedAt.slice(0,16).replace('T',' ')}）` : '';
       toast(`📂 JSONを読み込みました${d}`, 'success');
