@@ -268,6 +268,11 @@
   /* hidden file input */
   #jsonFileInput, #csvFileInput { display: none; }
 
+  .struct-warning { background:var(--accent-soft); border:1.5px solid var(--accent); border-radius:6px; padding:12px 16px; margin-bottom:18px; font-size:0.82rem; color:#7d2018; line-height:1.7; }
+  .struct-warning b { display:block; margin-bottom:6px; font-size:0.86rem; }
+  .struct-warning ul { padding-left:18px; margin:0; }
+  .struct-warning li { margin-bottom:3px; }
+
   .group-memo-wrap { padding:7px 20px 10px; background:#faf8f2; border-top:1px dashed #d8d4c8; }
   .group-memo-label { font-size:0.68rem; color:var(--ink-muted); margin-bottom:4px; font-weight:600; letter-spacing:0.06em; }
   .group-memo-input { width:100%; min-height:44px; font-size:0.78rem; font-family:'Noto Sans JP',sans-serif; color:var(--ink); border:1px solid #ddd; border-radius:3px; background:#fff; padding:6px 8px; outline:none; resize:vertical; transition:border-color 0.15s; line-height:1.6; }
@@ -979,12 +984,33 @@ const memos = {};
 const detailOpen = {}; // 詳細パネルの開閉状態を永続管理
 let allCollapsed = false;
 
+// DATA の構造上の問題（id / gid の欠落・重複）。commit前ガードはこのPC経由の変更しか
+// 見張れないので、GitHub上での直接編集等で壊れた場合に画面で気づけるようにする。
+const structuralWarnings = [];
+const cut = (s, n) => { s = String(s); return s.length > n ? s.slice(0, n) + '…' : s; };
+
 function initState() {
+  structuralWarnings.length = 0;
+  const seenItem = new Map(), seenGroup = new Map();
   DATA.forEach(sec => {
     sec.groups.forEach(g => {
+      if (!g.gid) {
+        structuralWarnings.push(`グループ「${g.title}」に gid がありません（メモ欄が保存されません）`);
+      } else {
+        const gk = sec.id + '/' + g.gid;
+        if (seenGroup.has(gk)) structuralWarnings.push(`gid が重複しています（${gk}）：「${seenGroup.get(gk)}」と「${g.title}」でメモ欄が共有されます`);
+        else seenGroup.set(gk, g.title);
+      }
       const mk = getMemoKey(sec.id, g.gid);
       if (!(mk in memos)) memos[mk] = '';
       g.items.forEach(it => {
+        if (!it.id) {
+          structuralWarnings.push(`「${cut(it.label, 30)}」に id がありません（チェック状態が保存されません）`);
+        } else {
+          const ik = sec.id + '/' + it.id;
+          if (seenItem.has(ik)) structuralWarnings.push(`id が重複しています（${ik}）：「${cut(seenItem.get(ik), 22)}」と「${cut(it.label, 22)}」のチェックが連動します`);
+          else seenItem.set(ik, it.label);
+        }
         const k = getKey(sec.id, it.id);
         if (!(k in state)) state[k] = 'none'; // none | checked | na
       });
@@ -1002,22 +1028,72 @@ function getMemoKey(secId, gid) { return 'memo_' + secId + '_' + gid; }
 // 2026-07-30 の移行時点で公開されていた版の並びから生成。以後は編集しないこと。
 const LEGACY_KEY_MAP = {"memo_acct_freee基本設定・期末準備":"memo_acct_acct-g1","acct_freee基本設定・期末準備_0":"acct_acct-01","acct_freee基本設定・期末準備_1":"acct_acct-02","acct_freee基本設定・期末準備_2":"acct_acct-03","acct_freee基本設定・期末準備_3":"acct_acct-04","memo_acct_証憑・入力の確認":"memo_acct_acct-g2","acct_証憑・入力の確認_0":"acct_acct-05","acct_証憑・入力の確認_1":"acct_acct-06","acct_証憑・入力の確認_2":"acct_acct-07","acct_証憑・入力の確認_3":"acct_acct-08","acct_証憑・入力の確認_4":"acct_acct-09","acct_証憑・入力の確認_5":"acct_acct-10","acct_証憑・入力の確認_6":"acct_acct-11","memo_acct_残高確認・実査":"memo_acct_acct-g3","acct_残高確認・実査_0":"acct_acct-12","acct_残高確認・実査_1":"acct_acct-13","acct_残高確認・実査_2":"acct_acct-14","acct_残高確認・実査_3":"acct_acct-15","acct_残高確認・実査_4":"acct_acct-16","acct_残高確認・実査_5":"acct_acct-17","memo_acct_期末決算整理仕訳":"memo_acct_acct-g4","acct_期末決算整理仕訳_0":"acct_acct-18","acct_期末決算整理仕訳_1":"acct_acct-19","acct_期末決算整理仕訳_2":"acct_acct-20","acct_期末決算整理仕訳_3":"acct_acct-21","acct_期末決算整理仕訳_4":"acct_acct-22","acct_期末決算整理仕訳_5":"acct_acct-23","memo_acct_freeeレポートによる最終確認":"memo_acct_acct-g5","acct_freeeレポートによる最終確認_0":"acct_acct-24","acct_freeeレポートによる最終確認_1":"acct_acct-25","acct_freeeレポートによる最終確認_2":"acct_acct-26","acct_freeeレポートによる最終確認_3":"acct_acct-27","acct_freeeレポートによる最終確認_4":"acct_acct-28","acct_freeeレポートによる最終確認_5":"acct_acct-29","memo_corp_freee申告への会計データ連携":"memo_corp_corp-g1","corp_freee申告への会計データ連携_0":"corp_corp-01","corp_freee申告への会計データ連携_1":"corp_corp-02","corp_freee申告への会計データ連携_2":"corp_corp-03","corp_freee申告への会計データ連携_3":"corp_corp-04","corp_freee申告への会計データ連携_4":"corp_corp-05","memo_corp_株主・出資者情報":"memo_corp_corp-g2","corp_株主・出資者情報_0":"corp_corp-06","corp_株主・出資者情報_1":"corp_corp-07","corp_株主・出資者情報_2":"corp_corp-08","memo_corp_予定納税・中間納付・源泉税":"memo_corp_corp-g3","corp_予定納税・中間納付・源泉税_0":"corp_corp-09","corp_予定納税・中間納付・源泉税_1":"corp_corp-10","memo_corp_売上・損益・加減算項目の確認":"memo_corp_corp-g4","corp_売上・損益・加減算項目の確認_0":"corp_corp-11","corp_売上・損益・加減算項目の確認_1":"corp_corp-12","corp_売上・損益・加減算項目の確認_2":"corp_corp-13","memo_corp_給与・役員報酬":"memo_corp_corp-g5","corp_給与・役員報酬_0":"corp_corp-14","corp_給与・役員報酬_1":"corp_corp-15","corp_給与・役員報酬_2":"corp_corp-16","corp_給与・役員報酬_3":"corp_corp-17","memo_corp_租税特別措置・税額控除":"memo_corp_corp-g6","corp_租税特別措置・税額控除_0":"corp_corp-18","corp_租税特別措置・税額控除_1":"corp_corp-19","corp_租税特別措置・税額控除_2":"corp_corp-20","corp_租税特別措置・税額控除_3":"corp_corp-21","memo_corp_損金算入項目・特別措置":"memo_corp_corp-g7","corp_損金算入項目・特別措置_0":"corp_corp-22","corp_損金算入項目・特別措置_1":"corp_corp-23","corp_損金算入項目・特別措置_2":"corp_corp-24","corp_損金算入項目・特別措置_3":"corp_corp-25","corp_損金算入項目・特別措置_4":"corp_corp-26","corp_損金算入項目・特別措置_5":"corp_corp-27","corp_損金算入項目・特別措置_6":"corp_corp-28","memo_corp_別表・添付書類の最終確認":"memo_corp_corp-g8","corp_別表・添付書類の最終確認_0":"corp_corp-29","corp_別表・添付書類の最終確認_1":"corp_corp-30","corp_別表・添付書類の最終確認_2":"corp_corp-31","corp_別表・添付書類の最終確認_3":"corp_corp-32","corp_別表・添付書類の最終確認_4":"corp_corp-33","corp_別表・添付書類の最終確認_5":"corp_corp-34","corp_別表・添付書類の最終確認_6":"corp_corp-35","memo_ctax_freee申告への消費税データ連携":"memo_ctax_ctax-g1","ctax_freee申告への消費税データ連携_0":"ctax_ctax-01","ctax_freee申告への消費税データ連携_1":"ctax_ctax-02","memo_ctax_納税義務・申告方法の確認":"memo_ctax_ctax-g2","ctax_納税義務・申告方法の確認_0":"ctax_ctax-03","ctax_納税義務・申告方法の確認_1":"ctax_ctax-04","ctax_納税義務・申告方法の確認_2":"ctax_ctax-05","ctax_納税義務・申告方法の確認_3":"ctax_ctax-06","memo_ctax_インボイス制度対応（2023年10月〜）":"memo_ctax_ctax-g3","ctax_インボイス制度対応（2023年10月〜）_0":"ctax_ctax-07","ctax_インボイス制度対応（2023年10月〜）_1":"ctax_ctax-08","ctax_インボイス制度対応（2023年10月〜）_2":"ctax_ctax-09","ctax_インボイス制度対応（2023年10月〜）_3":"ctax_ctax-10","memo_ctax_簡易課税の計算（簡易課税選択の場合のみ）":"memo_ctax_ctax-g4","ctax_簡易課税の計算（簡易課税選択の場合のみ）_0":"ctax_ctax-11","ctax_簡易課税の計算（簡易課税選択の場合のみ）_1":"ctax_ctax-12","ctax_簡易課税の計算（簡易課税選択の場合のみ）_2":"ctax_ctax-13","memo_ctax_税額計算・申告書の最終確認":"memo_ctax_ctax-g5","ctax_税額計算・申告書の最終確認_0":"ctax_ctax-14","ctax_税額計算・申告書の最終確認_1":"ctax_ctax-15","ctax_税額計算・申告書の最終確認_2":"ctax_ctax-16","ctax_税額計算・申告書の最終確認_3":"ctax_ctax-17","ctax_税額計算・申告書の最終確認_4":"ctax_ctax-18","ctax_税額計算・申告書の最終確認_5":"ctax_ctax-19","memo_common_電子帳簿保存法への対応":"memo_common_common-g1","common_電子帳簿保存法への対応_0":"common_common-01","common_電子帳簿保存法への対応_1":"common_common-02","memo_common_申告・納付スケジュール":"memo_common_common-g2","common_申告・納付スケジュール_0":"common_common-03","common_申告・納付スケジュール_1":"common_common-04","common_申告・納付スケジュール_2":"common_common-05","common_申告・納付スケジュール_3":"common_common-06","memo_common_翌期以降への引継ぎ事項":"memo_common_common-g3","common_翌期以降への引継ぎ事項_0":"common_common-07","common_翌期以降への引継ぎ事項_1":"common_common-08","common_翌期以降への引継ぎ事項_2":"common_common-09"};
 
-/** 保存データのキーを新形式へ寄せる（新形式のキーはそのまま通す） */
+/**
+ * 保存データのキーを新形式へ寄せる（新形式のキーはそのまま通す）。
+ * 旧キーと新キーが同じ項目を指して両方入っている場合は **新形式を優先**し、
+ * 上書きで静かに消えないよう衝突件数を返す。
+ */
 function migrateSaved(data) {
-  if (!data) return data;
+  if (!data) return { data: data, collisions: 0 };
+  let collisions = 0;
   const conv = o => {
     if (!o || typeof o !== 'object') return o;
-    const out = {};
-    for (const k of Object.keys(o)) out[LEGACY_KEY_MAP[k] || k] = o[k];
+    const out = {}, keys = Object.keys(o);
+    for (const k of keys) if (!(k in LEGACY_KEY_MAP)) out[k] = o[k];   // 新形式を先に確定
+    for (const k of keys) {                                            // 旧形式は空きだけ埋める
+      if (!(k in LEGACY_KEY_MAP)) continue;
+      const nk = LEGACY_KEY_MAP[k];
+      if (nk in out) { collisions++; continue; }
+      out[nk] = o[k];
+    }
     return out;
   };
-  return Object.assign({}, data, { state: conv(data.state), memos: conv(data.memos) });
+  return {
+    data: Object.assign({}, data, { state: conv(data.state), memos: conv(data.memos) }),
+    collisions: collisions,
+  };
+}
+
+/**
+ * 保存データを現在の state / memos に適用する。
+ * 現在の項目に該当しないキー（変換表に無い古い版のキー等）は取り込めないため、
+ * 黙って捨てずに件数を返して呼び出し側で可視化する。
+ */
+function applySaved(rawData) {
+  const r = migrateSaved(rawData);
+  const data = r.data || {};
+  let applied = 0; const dropped = [];
+  Object.keys(data.state || {}).forEach(k => {
+    if (k in state) {
+      const v = data.state[k];
+      // 旧boolean形式(true/false)との後方互換も維持
+      state[k] = v === true ? 'checked' : v === false ? 'none' : (v || 'none');
+      applied++;
+    } else dropped.push(k);
+  });
+  let appliedMemos = 0;
+  Object.keys(data.memos || {}).forEach(k => {
+    if (k in memos) { memos[k] = data.memos[k] || ''; appliedMemos++; }
+    else dropped.push(k);
+  });
+  if (dropped.length) console.warn('[checklist] 現在の項目に該当せず取り込めなかったキー:', dropped);
+  return { applied: applied, appliedMemos: appliedMemos, dropped: dropped, collisions: r.collisions, savedAt: data.savedAt };
 }
 
 function render() {
   initState();
   const container = document.getElementById('mainContent');
   container.innerHTML = '';
+
+  // id / gid が壊れていると保存・復元が静かに失敗するので、画面上で警告する
+  if (structuralWarnings.length) {
+    const warn = document.createElement('div');
+    warn.className = 'struct-warning';
+    warn.innerHTML = '<b>⚠️ 項目IDに問題があります。チェック状態やメモが正しく保存・復元されない可能性があります。</b><ul>'
+      + structuralWarnings.map(w => '<li>' + w.replace(/</g, '&lt;') + '</li>').join('') + '</ul>';
+    container.appendChild(warn);
+  }
+
   let no = 1;
 
   DATA.forEach(sec => {
@@ -1200,6 +1276,9 @@ function resetAll() {
   if (!confirm('全てのチェックとメモをリセットしますか？')) return;
   Object.keys(state).forEach(k => state[k] = 'none');
   Object.keys(memos).forEach(k => memos[k] = '');
+  // 自動保存OFFのときは lsSave() が何もしないため、保存済みデータを明示的に消す。
+  // 消さないと次回起動時に「リセット前の状態」が復元提案されてしまう。
+  try { localStorage.removeItem(LS_KEY); } catch(e) { /* localStorage無効環境 */ }
   lsSave();
   render();
 }
@@ -1264,23 +1343,16 @@ function loadJSON(event) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = migrateSaved(JSON.parse(e.target.result));
-      if (!data.state) throw new Error('形式が不正です');
-      // stateのキーを既存キーに限定してマージ（3値: 'checked' / 'na' / 'none' を保持）
-      Object.keys(state).forEach(k => {
-        if (!(k in data.state)) return;
-        const v = data.state[k];
-        // 旧boolean形式(true/false)との後方互換も維持
-        state[k] = v === true ? 'checked' : v === false ? 'none' : (v || 'none');
-      });
-      if (data.memos) {
-        Object.keys(memos).forEach(k => {
-          if (k in data.memos) memos[k] = data.memos[k] || '';
-        });
-      }
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.state) throw new Error('形式が不正です');
+      const r = applySaved(parsed);
       render();
-      const d = data.savedAt ? `（保存日時：${data.savedAt.slice(0,16).replace('T',' ')}）` : '';
-      toast(`📂 JSONを読み込みました${d}`, 'success');
+      const d = r.savedAt ? `（保存日時：${r.savedAt.slice(0,16).replace('T',' ')}）` : '';
+      let msg = `📂 JSONを読み込みました${d}／チェック${r.applied}件・メモ${r.appliedMemos}件を復元`;
+      if (r.dropped.length) msg += `／⚠️ ${r.dropped.length}件は現在の項目に該当せず取り込めませんでした`;
+      if (r.collisions) msg += `／⚠️ 旧新キーの重複${r.collisions}件は新形式を採用`;
+      const bad = r.dropped.length || r.collisions;
+      toast(msg, bad ? 'error' : 'success', bad ? 7000 : 2800);
     } catch(err) {
       toast(`❌ 読込失敗：${err.message}`, 'error', 4000);
     }
@@ -1351,15 +1423,10 @@ function lsLoad() {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return false;
-    const data = migrateSaved(JSON.parse(raw));
-    if (!data.state) return false;
-    Object.keys(state).forEach(k => {
-      if (!(k in data.state)) return;
-      const v = data.state[k];
-      state[k] = v === true ? 'checked' : v === false ? 'none' : v;
-    });
-    Object.keys(memos).forEach(k => { if (k in data.memos) memos[k] = data.memos[k] || ''; });
-    return data.savedAt || true;
+    const parsed = JSON.parse(raw);
+    if (!parsed.state) return false;
+    const r = applySaved(parsed);
+    return r.savedAt || true;
   } catch(e) { return false; }
 }
 
@@ -1376,21 +1443,12 @@ function scheduleAutoSave() {
   try {
     const raw = localStorage.getItem('taxChecklist_v1');
     if (!raw) return;
-    const data = migrateSaved(JSON.parse(raw));
-    if (!data || !data.state || !data.savedAt) return;
-    const d = data.savedAt.slice(0, 16).replace('T', ' ');
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.state || !parsed.savedAt) return;
+    const d = parsed.savedAt.slice(0, 16).replace('T', ' ');
     const ok = confirm('前回の自動保存データが見つかりました。\n保存日時：' + d + '\n\n復元しますか？');
     if (!ok) return;
-    Object.keys(state).forEach(k => {
-      if (!(k in data.state)) return;
-      const v = data.state[k];
-      state[k] = v === true ? 'checked' : v === false ? 'none' : (v || 'none');
-    });
-    if (data.memos) {
-      Object.keys(memos).forEach(k => {
-        if (k in data.memos) memos[k] = data.memos[k] || '';
-      });
-    }
+    applySaved(parsed);
   } catch(e) {}
 })();
 
